@@ -8,8 +8,23 @@ var browserSync = require('browser-sync');
 var browserSyncSpa = require('browser-sync-spa');
 
 var util = require('util');
+var httpProxy = require('http-proxy');
 
-var proxyMiddleware = require('http-proxy-middleware');
+let proxy = httpProxy.createProxyServer({
+    target: 'http://127.0.0.1:4111'
+});
+
+
+
+function proxyMiddleware(req, res, next) {
+    if (req.url.includes('arch/services')) {
+        proxy.web(req, res, (err) => {
+            next(err);
+        });
+    } else {
+        next();
+    }
+}
 
 function browserSyncInit(baseDir, browser) {
   browser = browser === undefined ? 'default' : browser;
@@ -23,7 +38,10 @@ function browserSyncInit(baseDir, browser) {
 
   var server = {
     baseDir: baseDir,
-    routes: routes
+    routes: routes,
+    middleware: [
+      proxyMiddleware
+    ]
   };
 
   /*
